@@ -15,9 +15,16 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
+
+import androidx.core.app.ActivityCompat;
+
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+
 public class LocationActivity extends AppCompatActivity {
 
-    Button btnLoadBus;
 
     RecyclerView recyclerViewBus;
 
@@ -27,13 +34,16 @@ public class LocationActivity extends AppCompatActivity {
 
     FirebaseFirestore db;
 
+    FusedLocationProviderClient fusedLocationClient;
+
+    String userCity = "Colombo";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_location);
 
-        btnLoadBus = findViewById(R.id.btnLoadBus);
 
         recyclerViewBus = findViewById(R.id.recyclerViewBus);
 
@@ -50,35 +60,82 @@ public class LocationActivity extends AppCompatActivity {
 
         db = FirebaseFirestore.getInstance();
 
-        btnLoadBus.setOnClickListener(v -> {
+        fusedLocationClient =
+                LocationServices.getFusedLocationProviderClient(this);
 
-            Log.d("FIREBASE_TEST", "BUTTON WORKS");
+        db.collection("buses")
+                .addSnapshotListener((value, error) -> {
 
-            busList.clear();
+                    if (error != null) {
 
-            db.collection("buses")
-                    .get()
-                    .addOnSuccessListener(queryDocumentSnapshots -> {
+                        Log.d("FIREBASE_TEST",
+                                "Listener Error: " + error.getMessage());
 
-                        Log.d("FIREBASE_TEST", "Firebase Success");
+                        return;
+                    }
 
-                        queryDocumentSnapshots.forEach(document -> {
+                    Log.d("FIREBASE_TEST", "Realtime Update");
+
+                    busList.clear();
+
+                    if (value != null) {
+
+                        value.forEach(document -> {
 
                             Bus bus = document.toObject(Bus.class);
 
-                            busList.add(bus);
+                            if (bus.getCity().equals(userCity)) {
+
+                                busList.add(bus);
+                            }
                         });
 
                         adapter.notifyDataSetChanged();
-                    })
-                    .addOnFailureListener(e -> {
+                    }
+                });
+        getUserLocation();
+    }
+    private void getUserLocation() {
+
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            ActivityCompat.requestPermissions(
+                    this,
+                    new String[]{
+                            Manifest.permission.ACCESS_FINE_LOCATION
+                    },
+                    1
+            );
+
+            return;
+        }
+
+        fusedLocationClient.getLastLocation()
+                .addOnSuccessListener(location -> {
+
+                    Log.d("FIREBASE_TEST",
+                            "Location request completed");
+
+                    if (location != null) {
+
+                        double latitude = location.getLatitude();
+                        double longitude = location.getLongitude();
 
                         Log.d("FIREBASE_TEST",
-                                "Firebase Error: " + e.getMessage());
-                    });
+                                "Lat: " + latitude);
 
+                        Log.d("FIREBASE_TEST",
+                                "Lng: " + longitude);
 
-            btnLoadBus.setText("CLICKED");
-        });
+                    } else {
+
+                        Log.d("FIREBASE_TEST",
+                                "Location is NULL");
+                    }
+                });
     }
+
 }

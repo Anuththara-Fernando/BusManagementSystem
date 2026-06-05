@@ -7,11 +7,20 @@
     android:orientation="vertical"
     android:padding="20dp">
 
-    <Button
-        android:id="@+id/btnLoadBus"
-        android:layout_width="match_parent"
+    <TextView
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="CLICK ME"/>
+        android:text="AI Suggested Nearby Buses"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:paddingBottom="16dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Showing buses near your current location"
+        android:textSize="16sp"
+        android:paddingBottom="20dp"/>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewBus"
